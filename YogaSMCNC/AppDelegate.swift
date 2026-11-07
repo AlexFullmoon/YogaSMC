@@ -270,9 +270,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         switch IOClass {
         case "IdeaVPC":
             conf.events = ideaEvents
+            conf.presets = ideaEvents
             isOpen = registerNotification(&conf)
         case "ThinkVPC":
             conf.events = thinkEvents
+            conf.presets = thinkEvents
             isOpen = registerNotification(&conf)
             thinkWakeup()
             if !hide, !defaults.bool(forKey: "DisableFan") {

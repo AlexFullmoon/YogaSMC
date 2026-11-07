@@ -27,6 +27,6 @@
 	<key>NSPrefPaneIconLabel</key>
 	<string>YogaSMCPane</string>
 	<key>NSPrincipalClass</key>
-	<string>YogaSMCPane</string>
+	<string>YogaSMCPane.YogaSMCPane</string>
 </dict>
 </plist>

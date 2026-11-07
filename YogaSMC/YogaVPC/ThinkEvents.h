@@ -32,11 +32,17 @@ enum tpacpi_hkey_event_t : UInt32 {
     TP_HKEY_EV_SEARCH           = 0x101E, /* Search (F10, _Q67) */
     TP_HKEY_EV_MISSION          = 0x101F, /* All open apps/Mission Control (F11, _Q68) */
     TP_HKEY_EV_APPS             = 0x1020, /* All programs/Launchpad (F12, _Q69) */
+    TP_HKEY_EV_ZOOM             = 0x1014, /* HiDPI zoom (Fn+Tab) */
 
     /* Hotkey-related (preset masks) */
     TP_HKEY_EV_STAR             = 0x1311, /* Star (F12, _Q62) */
+    TP_HKEY_EV_SNIPPING         = 0x1312, /* Snipping tool (Fn+PrtSc) */
     TP_HKEY_EV_BLUETOOTH        = 0x1314, /* Bluetooth (F10, _Q60) */
     TP_HKEY_EV_KEYBOARD         = 0x1315, /* Keyboard (F11, _Q61) */
+    TP_HKEY_EV_FN_RSHIFT        = 0x1316, /* Fn+Right Shift (_Q71) */
+    TP_HKEY_EV_NOTIFICATION     = 0x1317, /* Notification center (Fn+F9) */
+    TP_HKEY_EV_PICKUP_PHONE     = 0x1318, /* Pick up phone (Fn+F10) */
+    TP_HKEY_EV_HANGUP_PHONE     = 0x1319, /* Hang up phone (Fn+F11) */
 
     /* Reasons for waking up from S3/S4 */
     TP_HKEY_EV_WKUP_S3_UNDOCK    = 0x2304, /* undock requested, S3 */

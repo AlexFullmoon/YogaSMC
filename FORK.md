@@ -44,3 +44,45 @@ Only `8086:02FC` (Comet Lake-LP), the only device tested. Register layout is the
 Release builds log only errors. To read them in zsh, call `/usr/bin/log` by full path: `log` is a zsh builtin and shadows it, returning nothing.
 
 `YogaISH` must not run together with any other ISH driver. In particular, remove the standalone test kext (`ISHTest.kext`) from OpenCore if it was used.
+
+## Fn keys
+
+HKEY events on X1 Yoga Gen 5 (all enabled by the default hotkey mask, sent from EC queries `_Q63`, `_Q65`, `_Q66`, `_Q60`):
+
+| Key | Event | Action |
+| ---- | ---- | ---- |
+| Fn-F7 | `0x1007` | Toggle mirroring of all displays to the main one (`mirrorHelper`) |
+| Fn-F9 | `0x1317` | Open Notification Center by clicking the menu bar clock |
+| Fn-F10 | `0x1318` | Custom (phone pickup on Windows) |
+| Fn-F11 | `0x1319` | Custom (phone hangup on Windows) |
+| Fn-F12 | `0x1311` | Custom, by default opens YogaSMCPane (Option: System Settings) |
+| Fn-PrtSc | `0x1312` | Launch Screenshot.app |
+| Fn-Tab | `0x1014` | Custom (zoom on Windows) |
+
+The Notification Center script finds the clock by `AXIdentifier` `com.apple.menuextra.clock`, because its name is localized. It needs Accessibility and Automation (System Events) permissions for YogaSMCNC.
+
+### Custom actions
+
+Stored in `org.zhen.YogaSMC` as `CustomHotkeys`:
+
+```
+CustomHotkeys = { "1014" = { action = launchapp; option = "/Applications/Calculator.app"; }; }
+```
+
+`action` is `launchapp` (app name or path) or `script` (AppleScript source; for a long script use `run script POSIX file "/path/x.scpt"`). YogaSMCNC reads it on every press, so changes apply without a restart, and a custom action takes priority over the `Events` table. The Hotkeys tab in YogaSMCPane is built in code (`ThinkSMCPane.swift`) and appears only for ThinkVPC.
+
+Because the pane now has more than one Swift class, `NSPrincipalClass` is module-qualified (`YogaSMCPane.YogaSMCPane`); otherwise the loader picks the first class in the binary and fails.
+
+### Saved events
+
+YogaSMCNC used to save the whole event table into `Events` on quit, and saved entries override built-in ones on launch, so changed defaults never reached existing installs. Now only entries that differ from the built-in table are saved. An old full copy can be removed with "Clear events" in the prefpane or `defaults delete org.zhen.YogaSMC Events` while YogaSMCNC is not running.
+
+### Permissions and signing
+
+macOS ties Accessibility and Automation grants to the code signature. An unsigned or ad-hoc signed build gets a new identity on every rebuild, so the grants silently stop working. Sign YogaSMCNC with a stable certificate (a self-signed code signing certificate is enough) after each build:
+
+```
+codesign --force --deep -s "<certificate name>" /Applications/YogaSMCNC.app
+```
+
+To use the same identity on another Mac, export the certificate with its private key as `.p12`.

@@ -29,6 +29,27 @@ let siriAS = """
                   end tell
                 end tell
              """
+// macOS 13+, the clock opens Notification Center; match by identifier, the name is localized
+let notificationCenterAS = """
+                              tell application "System Events" to tell process "ControlCenter"
+                                  repeat with mbi in menu bar items of menu bar 1
+                                      if value of attribute "AXIdentifier" of mbi is "com.apple.menuextra.clock" then
+                                          click mbi
+                                          exit repeat
+                                      end if
+                                  end repeat
+                              end tell
+                           """
+// Fn keys with a user-assigned action, shared by YogaSMCNC and YogaSMCPane.
+// Stored as CustomHotkeys = { "<event hex>": { action: launchapp | script, option: <app or AppleScript> } }
+let customHotkeysKey = "CustomHotkeys"
+let customHotkeys: [(event: UInt32, name: String)] = [
+    (TP_HKEY_EV_ZOOM.rawValue, "Fn-Tab"),
+    (TP_HKEY_EV_PICKUP_PHONE.rawValue, "Fn-F10"),
+    (TP_HKEY_EV_HANGUP_PHONE.rawValue, "Fn-F11"),
+    (TP_HKEY_EV_STAR.rawValue, "Fn-F12")
+]
+
 let reloadAS = """
                   tell application "YogaSMCNC" to quit
                   tell application "YogaSMCNC" to activate
@@ -45,8 +66,8 @@ let setMicVolumeAS = "set volume input volume %d"
 
 // based on https://medium.com/macoclock/1ba82537f7c3
 func scriptHelper(_ source: String, _ name: String, _ image: NSString? = nil) -> NSAppleEventDescriptor? {
+    var error: NSDictionary?
     if let scpt = NSAppleScript(source: source) {
-        var error: NSDictionary?
         let ret = scpt.executeAndReturnError(&error)
         if error == nil {
             if let img = image {
@@ -56,9 +77,39 @@ func scriptHelper(_ source: String, _ name: String, _ image: NSString? = nil) ->
         }
     }
     if #available(macOS 10.12, *) {
-        os_log("%s: failed to execute script", type: .error, name)
+        // e.g. -1719 / -25211 when Accessibility permission is missing
+        let code = error?[NSAppleScript.errorNumber] as? Int ?? 0
+        let message = error?[NSAppleScript.errorMessage] as? String ?? "unknown error"
+        os_log("%{public}s: failed to execute script (%d): %{public}s", type: .error, name, code, message)
     }
     return nil
+}
+
+// Toggle mirroring of all active displays to the main one
+func mirrorHelper(_ name: String, _ display: Bool) {
+    var count: UInt32 = 0
+    // online list also contains displays already mirrored
+    guard CGGetOnlineDisplayList(0, nil, &count) == .success, count > 0 else { return }
+    var displays = [CGDirectDisplayID](repeating: 0, count: Int(count))
+    guard CGGetOnlineDisplayList(count, &displays, &count) == .success else { return }
+
+    if count < 2 {
+        if #available(macOS 10.12, *) {
+            os_log("%s: no second display", type: .info, name)
+        }
+        if display { showOSD(name) }
+        return
+    }
+
+    var config: CGDisplayConfigRef?
+    guard CGBeginDisplayConfiguration(&config) == .success else { return }
+    let main = CGMainDisplayID()
+    let mirrored = CGDisplayIsInMirrorSet(main) != 0
+    for id in displays[..<Int(count)] where id != main {
+        CGConfigureDisplayMirrorOfDisplay(config, id, mirrored ? kCGNullDirectDisplay : main)
+    }
+    CGCompleteDisplayConfiguration(config, .permanently)
+    if display { showOSD(name) }
 }
 
 func prefpaneHelper() {

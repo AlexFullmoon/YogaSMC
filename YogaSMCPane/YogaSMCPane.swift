@@ -172,6 +172,7 @@ class YogaSMCPane: NSPreferencePane {
         case "ThinkVPC":
             vClass.stringValue = "Think"
             updateThink(props)
+            addHotkeysTab()
             #if !DEBUG
             mainTabView.removeTabViewItem(ideaViewItem)
             #endif

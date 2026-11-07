@@ -54,7 +54,13 @@ func notificationCallback(
         return
     }
 
-    if let events = conf.events[notification.event] {
+    if #available(macOS 10.12, *) {
+        os_log("Event 0x%04x:%d", type: .info, notification.event, notification.data)
+    }
+
+    if let desc = customHotkey(notification.event) {
+        eventActuator(desc, notification.data, &conf)
+    } else if let events = conf.events[notification.event] {
         let mod = conf.modifier.subtracting(.capsLock)
         if !mod.isEmpty,
            let desc = events[notification.data | UInt32(mod.rawValue)] {
@@ -220,6 +226,8 @@ func eventActuator(_ desc: EventDesc, _ data: UInt32, _ conf: inout SharedConfig
         }
     case .wireless:
         wirelessHelper(desc.name, desc.display)
+    case .mirror:
+        mirrorHelper(desc.name, desc.display)
     default:
         #if DEBUG
         if #available(macOS 10.12, *) {

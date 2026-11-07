@@ -64,9 +64,18 @@ struct EventDesc {
     }
 }
 
+extension EventDesc {
+    func isSame(_ other: EventDesc) -> Bool {
+        return name == other.name && image == other.image && action == other.action &&
+            display == other.display && option == other.option
+    }
+}
+
 struct SharedConfig {
     var connect: io_connect_t = 0
     var events: [UInt32: [UInt32: EventDesc]] = [:]
+    // built-in table, only entries that differ from it are saved
+    var presets: [UInt32: [UInt32: EventDesc]] = [:]
     var modifier = NSEvent.ModifierFlags()
     var service: io_service_t = 0
 }
@@ -134,8 +143,16 @@ let thinkEvents: [UInt32: [UInt32: EventDesc]] = [
     TP_HKEY_EV_SEARCH.rawValue: [0: EventDesc("Search", act: .siri, display: false)], // 0x101E
     TP_HKEY_EV_MISSION.rawValue: [0: EventDesc("Mission Control", act: .mission, display: false)], // 0x101F
     TP_HKEY_EV_APPS.rawValue: [0: EventDesc("Launchpad", act: .launchpad, display: false)], // 0x1020
+    TP_HKEY_EV_ZOOM.rawValue: [0: EventDesc("Fn-Tab")], // 0x1014
+    TP_HKEY_EV_SNIPPING.rawValue: [0: EventDesc("Snipping Tool", act: .launchapp, display: false, opt: "Screenshot")], // 0x1312
+    TP_HKEY_EV_FN_RSHIFT.rawValue: [0: EventDesc("Fn-Right Shift")], // 0x1316
+    TP_HKEY_EV_NOTIFICATION.rawValue: [
+        0: EventDesc("Notification Center", act: .script, display: false, opt: notificationCenterAS)
+    ], // 0x1317
+    TP_HKEY_EV_PICKUP_PHONE.rawValue: [0: EventDesc("Fn-F10")], // 0x1318
+    TP_HKEY_EV_HANGUP_PHONE.rawValue: [0: EventDesc("Fn-F11")], // 0x1319
     TP_HKEY_EV_STAR.rawValue: [
-        0: EventDesc("Custom Hotkey", .kStar, act: .script, opt: prefpaneAS),
+        0: EventDesc("Custom Hotkey", .kStar, act: .prefpane, display: false),
         optionFlag: EventDesc("System Prefereces", .kStar, act: .launchbundle, opt: "com.apple.systempreferences")
     ], // 0x1311
     TP_HKEY_EV_BLUETOOTH.rawValue: [
@@ -182,6 +199,19 @@ let HIDDEvents: [UInt32: [UInt32: EventDesc]] = [
     0xCC: [0: EventDesc("Convertible")], // Down
     0xCD: [0: EventDesc("Convertible", display: false)] // Up
 ]
+
+// Read on every press, so changes from the prefpane apply without restarting
+func customHotkey(_ event: UInt32) -> EventDesc? {
+    guard let name = customHotkeys.first(where: { $0.event == event })?.name,
+          let dict = UserDefaults(suiteName: "org.zhen.YogaSMC")?.dictionary(forKey: customHotkeysKey),
+          let entry = dict[String(event, radix: 16)] as? [String: String],
+          let action = EventAction(rawValue: entry["action"] ?? ""),
+          action == .launchapp || action == .script,
+          let option = entry["option"], !option.isEmpty else {
+        return nil
+    }
+    return EventDesc(name, act: action, display: false, opt: option)
+}
 
 func loadEvents(_ conf: inout SharedConfig) {
     guard let dict = UserDefaults(suiteName: "org.zhen.YogaSMC")?.object(forKey: "Events") as? [String: Any] else {
@@ -238,6 +268,7 @@ func saveEvents(_ conf: inout SharedConfig) {
     for (eid, info) in conf.events {
         var events: [String: Any] = [:]
         for (data, desc) in info {
+            if let preset = conf.presets[eid]?[data], preset.isSame(desc) { continue }
             var event: [String: Any] = [:]
             event["name"] = desc.name
             if let res = desc.image {
@@ -255,6 +286,7 @@ func saveEvents(_ conf: inout SharedConfig) {
             }
             events[String(data, radix: 16)] = event
         }
+        if events.isEmpty { continue }
         dict[String(eid, radix: 16)] = events
     }
     UserDefaults(suiteName: "org.zhen.YogaSMC")?.setValue(dict, forKey: "Events")

@@ -5,6 +5,8 @@
 This is a fork of [zhen-zen/YogaSMC](https://github.com/zhen-zen/YogaSMC), maintained for ThinkPad X1 Yoga Gen 5. Changes so far:
 
 - **YogaISH**: minimal Intel Sensor Hub host. On this machine the hinge posture (laptop / stand / tent / tablet) reaches EC only while ISH has a host driver, so without it tablet mode is never detected. With YogaISH, ThinkVPC reports Yoga mode and disables keyboard and touchpad in tablet-like modes as intended. Only matches ISH `8086:02FC` (Comet Lake-LP).
+- **Fn keys**: Fn-F7 toggles display mirroring, Fn-F9 opens Notification Center, Fn-PrtSc opens Screenshot. Fn-Tab, Fn-F10, Fn-F11 and Fn-F12 can launch an app or run an AppleScript, set in the new Hotkeys tab of YogaSMCPane.
+- **YogaSMCNC** saves only events that differ from the built-in table, so fixes to defaults are no longer masked by an old saved copy.
 
 Technical details are in [FORK.md](FORK.md).
 
