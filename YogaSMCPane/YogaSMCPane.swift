@@ -103,8 +103,15 @@ class YogaSMCPane: NSPreferencePane {
     // Main
 
     @IBOutlet weak var mainTabView: NSTabView!
-    @IBOutlet weak var ideaViewItem: NSTabViewItem!
-    @IBOutlet weak var thinkViewItem: NSTabViewItem!
+    // strong, removed items are released by the tab view and willSelect runs on every reopen
+    @IBOutlet var ideaViewItem: NSTabViewItem!
+    @IBOutlet var thinkViewItem: NSTabViewItem!
+
+    func removeTab(_ item: NSTabViewItem) {
+        if mainTabView.tabViewItems.contains(item) {
+            mainTabView.removeTabViewItem(item)
+        }
+    }
 
     @IBOutlet weak var vDYTCRevision: NSTextField!
     @IBOutlet weak var vDYTCFuncMode: NSTextField!
@@ -165,23 +172,23 @@ class YogaSMCPane: NSPreferencePane {
             vClass.stringValue = "Idea"
             updateIdea(props)
             #if !DEBUG
-            mainTabView.removeTabViewItem(thinkViewItem)
+            removeTab(thinkViewItem)
             #endif
         case "ThinkVPC":
             vClass.stringValue = "Think"
             updateThink(props)
             addHotkeysTab()
             #if !DEBUG
-            mainTabView.removeTabViewItem(ideaViewItem)
+            removeTab(ideaViewItem)
             #endif
         case "YogaHIDD":
             vClass.stringValue = "HIDD"
-            mainTabView.removeTabViewItem(ideaViewItem)
-            mainTabView.removeTabViewItem(thinkViewItem)
+            removeTab(ideaViewItem)
+            removeTab(thinkViewItem)
         default:
             vClass.stringValue = "Unsupported"
-            mainTabView.removeTabViewItem(ideaViewItem)
-            mainTabView.removeTabViewItem(thinkViewItem)
+            removeTab(ideaViewItem)
+            removeTab(thinkViewItem)
         }
     }
 }
