@@ -65,9 +65,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.orderFrontStandardAboutPanel(sender)
     }
 
+    // Login items are recorded by cdhash when there is no Team ID, so every rebuild
+    // needs to register the helper again; done on launch when StartAtLogin is set
+    func setStartAtLogin(_ enable: Bool) -> Bool {
+        let identifier = "\(Bundle.main.bundleIdentifier!)Helper"
+        if #available(macOS 13.0, *) {
+            let service = SMAppService.loginItem(identifier: identifier)
+            do {
+                if enable {
+                    try service.register()
+                } else if service.status != .notRegistered {
+                    try service.unregister()
+                }
+                return true
+            } catch {
+                os_log("Login item %{public}s failed: %{public}s", type: .error,
+                       enable ? "register" : "unregister", error.localizedDescription)
+                return false
+            }
+        }
+        return SMLoginItemSetEnabled(identifier as CFString, enable)
+    }
+
     @objc func toggleStartAtLogin(_ sender: NSMenuItem) {
-        let identifier = "\(Bundle.main.bundleIdentifier!)Helper" as CFString
-        if SMLoginItemSetEnabled(identifier, sender.state == .off) {
+        if setStartAtLogin(sender.state == .off) {
             sender.state = (sender.state == .on) ? .off : .on
             defaults.setValue((sender.state == .on), forKey: "StartAtLogin")
         } else {
@@ -397,6 +418,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 os_log("First launch", type: .info)
             }
             defaults.setValue(false, forKey: "StartAtLogin")
+        } else if defaults.bool(forKey: "StartAtLogin") {
+            _ = setStartAtLogin(true)
         }
 
         hide = defaults.bool(forKey: "HideIcon")
