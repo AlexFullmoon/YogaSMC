@@ -244,6 +244,17 @@ private:
      */
     bool setConservation(const char* method, UInt8 value);
 
+    /**
+     *  Set charge start / stop threshold of current battery, with the same limits as Linux
+     *  thinkpad_acpi: start 0-99 (0 is firmware default), stop 1-100, start <= stop
+     *
+     *  @param stop true for stop threshold, false for start
+     *  @param value threshold in percent, 0 for stop also means 100
+     *
+     *  @return true if success
+     */
+    bool setChargeThreshold(bool stop, UInt32 value);
+
     bool updateAdaptiveKBD(int arg);
 
     /**

@@ -68,6 +68,46 @@ bool ThinkVPC::setConservation(const char * method, UInt8 value) {
     return true;
 }
 
+bool ThinkVPC::setChargeThreshold(bool stop, UInt32 value) {
+    UInt32 start_cur, stop_cur;
+    if (evaluateIntegerParam(getCMstart, &start_cur, batnum) != kIOReturnSuccess ||
+        evaluateIntegerParam(getCMstop, &stop_cur, batnum) != kIOReturnSuccess ||
+        (start_cur & BIT(31)) || (stop_cur & BIT(31))) {
+        AlwaysLog(updateFailure, batteryPrompt);
+        return false;
+    }
+    start_cur &= 0xff;
+    stop_cur &= 0xff;
+    if (stop_cur == 0)
+        stop_cur = 100;
+
+    if (stop) {
+        if (value == 0)
+            value = 100;
+        if (value > 100 || value < start_cur) {
+            AlwaysLog("Invalid stop threshold %d for battery %d (start %d)", value, batnum, start_cur);
+            return false;
+        }
+    } else if (value > 99 || value > stop_cur) {
+        AlwaysLog("Invalid start threshold %d for battery %d (stop %d)", value, batnum, stop_cur);
+        return false;
+    }
+
+    // 100 is stored as 0
+    UInt32 result;
+    const char *method = stop ? setCMstop : setCMstart;
+    if (evaluateIntegerParam(method, &result, (batnum << 8) | (value % 100)) != kIOReturnSuccess ||
+        (result & BIT(31))) {
+        AlwaysLog(updateFailure, method);
+        updateBattery();
+        return false;
+    }
+
+    DebugLog(updateSuccess, method, result);
+    updateBattery();
+    return true;
+}
+
 bool ThinkVPC::updateMutestatus(bool update) {
     if (ec->evaluateInteger(getAudioMutestatus, &mutestate) != kIOReturnSuccess) {
         AlwaysLog(updateFailure, __func__);
@@ -310,13 +350,19 @@ void ThinkVPC::setPropertiesGated(OSObject *props) {
                 batnum = value->unsigned8BitValue();
                 updateBattery(value->unsigned8BitValue());
             } else if (key->isEqualTo("setCMstart")) {
-                OSNumber *value;
-                getPropertyNumber("setCMstart");
-                setConservation(setCMstart, value->unsigned8BitValue());
+                OSNumber *value = OSDynamicCast(OSNumber, dict->getObject(key));
+                if (value == nullptr) {
+                    AlwaysLog(valueInvalid, "setCMstart");
+                    continue;
+                }
+                setChargeThreshold(false, value->unsigned32BitValue());
             } else if (key->isEqualTo("setCMstop")) {
-                OSNumber *value;
-                getPropertyNumber("setCMstop");
-                setConservation(setCMstop, value->unsigned8BitValue());
+                OSNumber *value = OSDynamicCast(OSNumber, dict->getObject(key));
+                if (value == nullptr) {
+                    AlwaysLog(valueInvalid, "setCMstop");
+                    continue;
+                }
+                setChargeThreshold(true, value->unsigned32BitValue());
             } else if (key->isEqualTo("setCMInhibitCharge")) {
                 OSNumber *value;
                 getPropertyNumber("setCMInhibitCharge");

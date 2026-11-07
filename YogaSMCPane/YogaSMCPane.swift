@@ -20,8 +20,6 @@ class YogaSMCPane: NSPreferencePane {
     let service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("YogaVPC"))
     let defaults = UserDefaults(suiteName: "org.zhen.YogaSMC")!
 
-    var thinkBatteryNumber = -1
-
     @IBOutlet weak var vVersion: NSTextField!
     @IBOutlet weak var vClass: NSTextField!
     @IBOutlet weak var vECRead: NSTextField!
