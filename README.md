@@ -1,5 +1,15 @@
 # YogaSMC ![CI](https://github.com/zhen-zen/YogaSMC/workflows/CI/badge.svg) [![Join the chat at https://gitter.im/YogaSMC/community](https://badges.gitter.im/YogaSMC/community.svg)](https://gitter.im/YogaSMC/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+## About this fork
+
+This is a fork of [zhen-zen/YogaSMC](https://github.com/zhen-zen/YogaSMC), maintained for ThinkPad X1 Yoga Gen 5. Changes so far:
+
+- **YogaISH**: minimal Intel Sensor Hub host. On this machine the hinge posture (laptop / stand / tent / tablet) reaches EC only while ISH has a host driver, so without it tablet mode is never detected. With YogaISH, ThinkVPC reports Yoga mode and disables keyboard and touchpad in tablet-like modes as intended. Only matches ISH `8086:02FC` (Comet Lake-LP).
+
+Technical details are in [FORK.md](FORK.md).
+
+## Original description
+
 This driver consists of YogaSMC, YogaWMI and YogaVPC.
 
 Each component can be derived for different targets. Currently ThinkPad and IdeaPad series (all other consumer brands) are supported. Support for generic Intel HID event & 5 button array, and HP system (both laptop and desktop, requires vanilla EC) is experimental.
