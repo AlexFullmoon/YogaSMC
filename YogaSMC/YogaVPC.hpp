@@ -70,6 +70,12 @@ private:
      *  Simple lock to prevent DYTC update when user setting is in progress
      */
     bool DYTCLock {false};
+
+    /**
+     *  Function and performance mode last read with CQL off, shown under lapmode
+     */
+    UInt8 DYTCFuncMode {DYTC_FUNCTION_STD};
+    UInt8 DYTCPerfMode {DYTC_MODE_BALANCE};
     
     /**
      *  Set DYTC mode
@@ -93,10 +99,12 @@ private:
      *  Parse DYTC status
      *
      *  @param result result from DYTC command
+     *  @param probe toggle CQL to read the mode under lapmode; each toggle raises
+     *               an extra DYTC event, so it is skipped when handling one
      *
      *  @return true if success
      */
-    bool parseDYTC(DYTC_RESULT result);
+    bool parseDYTC(DYTC_RESULT result, bool probe=false);
     
     /**
      *  DYTC Version
@@ -275,9 +283,11 @@ protected:
     /**
      *  Update DYTC status
      *
+     *  @param probe see parseDYTC
+     *
      *  @return true if success
      */
-    bool updateDYTC();
+    bool updateDYTC(bool probe=false);
 
     /**
      *  Set DYTC status

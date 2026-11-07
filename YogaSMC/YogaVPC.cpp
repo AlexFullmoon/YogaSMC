@@ -187,7 +187,7 @@ void YogaVPC::stop(IOService *provider) {
 void YogaVPC::updateAll() {
     updateBacklight();
     updateClamshell();
-    if (!updateDYTC())
+    if (!updateDYTC(true))
         AlwaysLog("Update DYTC failed");
 }
 
@@ -506,7 +506,7 @@ void YogaVPC::initDYTC() {
     setProperty("DYTC", DYTCVersion);
 }
 
-bool YogaVPC::parseDYTC(DYTC_RESULT result) {
+bool YogaVPC::parseDYTC(DYTC_RESULT result, bool probe) {
     OSDictionary *DYTCStatus = OSDictionary::withDictionary(DYTCVersion);
     OSObject *value;
 
@@ -572,10 +572,19 @@ bool YogaVPC::parseDYTC(DYTC_RESULT result) {
     DYTCStatus->setObject("Function Status", functionStatus);
     functionStatus->release();
 
-    if (lapmode && !DYTCCommand(dytc_set_cmd, &result, DYTC_FUNCTION_CQL, 0xf, false)) {
-        DYTCStatus->release();
-        return false;
+    if (lapmode) {
+        if (probe) {
+            if (!DYTCCommand(dytc_set_cmd, &result, DYTC_FUNCTION_CQL, 0xf, false)) {
+                DYTCStatus->release();
+                return false;
+            }
+        } else {
+            result.get.funcmode = DYTCFuncMode;
+            result.get.perfmode = DYTCPerfMode;
+        }
     }
+    DYTCFuncMode = result.get.funcmode;
+    DYTCPerfMode = result.get.perfmode;
 
     switch (result.get.funcmode) {
         case DYTC_FUNCTION_STD:
@@ -621,7 +630,7 @@ bool YogaVPC::parseDYTC(DYTC_RESULT result) {
 
     if (lapmode) {
         setPropertyString(DYTCStatus, "FuncMode", "Lap");
-        if (!DYTCCommand(dytc_set_cmd, &result, DYTC_FUNCTION_CQL, 0xf, true)) {
+        if (probe && !DYTCCommand(dytc_set_cmd, &result, DYTC_FUNCTION_CQL, 0xf, true)) {
             DYTCStatus->release();
             return false;
         }
@@ -632,7 +641,7 @@ bool YogaVPC::parseDYTC(DYTC_RESULT result) {
     return true;
 }
 
-bool YogaVPC::updateDYTC() {
+bool YogaVPC::updateDYTC(bool probe) {
     if (!DYTCCap)
         return true;
 
@@ -640,7 +649,7 @@ bool YogaVPC::updateDYTC() {
     if (!DYTCCommand(dytc_get_cmd, &result))
         return false;
 
-    return parseDYTC(result);
+    return parseDYTC(result, probe);
 }
 
 bool YogaVPC::setDYTC(int funcmode, int perfmode) {
@@ -665,6 +674,9 @@ bool YogaVPC::setDYTC(int funcmode, int perfmode) {
         if (!DYTCCommand(dytc_set_cmd, &result, DYTC_FUNCTION_CQL, 0xf, true))
             return false;
 
+    // shown under lapmode without toggling CQL again
+    DYTCFuncMode = (perfmode == DYTC_MODE_BALANCE) ? DYTC_FUNCTION_STD : funcmode;
+    DYTCPerfMode = perfmode;
     return parseDYTC(result);
 }
 
