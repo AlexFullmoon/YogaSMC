@@ -292,11 +292,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case "IdeaVPC":
             conf.events = ideaEvents
             conf.presets = ideaEvents
-            isOpen = registerNotification(&conf)
+            isOpen = registerNotification(self)
         case "ThinkVPC":
             conf.events = thinkEvents
             conf.presets = thinkEvents
-            isOpen = registerNotification(&conf)
+            isOpen = registerNotification(self)
             thinkWakeup()
             if !hide, !defaults.bool(forKey: "DisableFan") {
                 if ECCap == "RW" {
@@ -343,7 +343,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         case "YogaHIDD":
             conf.events = HIDDEvents
-            _ = registerNotification(&conf)
+            _ = registerNotification(self)
             if #available(macOS 10.12, *) {
                 os_log("Skip loadEvents", type: .info)
             }

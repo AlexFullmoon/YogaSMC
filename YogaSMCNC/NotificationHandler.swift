@@ -9,11 +9,12 @@
 import AppKit
 import os.log
 
-func registerNotification(_ conf: inout SharedConfig) -> Bool {
-    // fix warning per https://forums.swift.org/t/swift-5-2-pointers-and-coretext/34862
-    var portContext: CFMachPortContext = withUnsafeMutableBytes(of: &conf) { conf in
-        CFMachPortContext(version: 0, info: conf.baseAddress, retain: nil, release: nil, copyDescription: nil)
-    }
+// The callback gets the app delegate, which lives as long as the app, and works on its conf
+// directly: a pointer to conf itself would outlive withUnsafeMutableBytes, and a copy loses changes
+func registerNotification(_ delegate: AppDelegate) -> Bool {
+    var portContext = CFMachPortContext(version: 0, info: Unmanaged.passUnretained(delegate).toOpaque(),
+                                        retain: nil, release: nil, copyDescription: nil)
+    let conf = delegate.conf
 
     guard let notificationPort = CFMachPortCreate(kCFAllocatorDefault, notificationCallback, &portContext, nil),
        let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, notificationPort, 0) else {
@@ -40,12 +41,13 @@ func notificationCallback(
     _ size: CFIndex,
     _ info: UnsafeMutableRawPointer?
 ) {
-    guard var conf = info?.load(as: SharedConfig.self) else {
+    guard let info = info else {
         if #available(macOS 10.12, *) {
             os_log("Invalid config", type: .error)
         }
         return
     }
+    let delegate = Unmanaged<AppDelegate>.fromOpaque(info).takeUnretainedValue()
 
     guard let notification = msg?.load(as: SMCNotificationMessage.self) else {
         if #available(macOS 10.12, *) {
@@ -59,16 +61,16 @@ func notificationCallback(
     }
 
     if let desc = customHotkey(notification.event) {
-        eventActuator(desc, notification.data, &conf)
-    } else if let events = conf.events[notification.event] {
-        let mod = conf.modifier.subtracting(.capsLock)
+        eventActuator(desc, notification.data, &delegate.conf)
+    } else if let events = delegate.conf.events[notification.event] {
+        let mod = delegate.conf.modifier.subtracting(.capsLock)
         if !mod.isEmpty,
            let desc = events[notification.data | UInt32(mod.rawValue)] {
-            eventActuator(desc, notification.data, &conf)
+            eventActuator(desc, notification.data, &delegate.conf)
         } else if let desc = events[notification.data] {
-            eventActuator(desc, notification.data, &conf)
+            eventActuator(desc, notification.data, &delegate.conf)
         } else if let desc = events[0] {
-            eventActuator(desc, notification.data, &conf)
+            eventActuator(desc, notification.data, &delegate.conf)
         } else {
             let value = String(format: "0x%04x:%d", notification.event, notification.data)
             showOSDRaw("\(NSLocalizedString("EventVar", comment: "Event "))\(value)")
@@ -79,7 +81,7 @@ func notificationCallback(
     } else {
         let value = String(format: "0x%04x:%d", notification.event, notification.data)
         showOSDRaw("\(NSLocalizedString("EventVar", comment: "Event "))\(value)")
-        conf.events[notification.event] = [0: EventDesc("Event \(value)", nil, opt: "Unknown")]
+        delegate.conf.events[notification.event] = [0: EventDesc("Event \(value)", nil, opt: "Unknown")]
         #if DEBUG
         if #available(macOS 10.12, *) {
             os_log("Event %s", type: .debug, value)
