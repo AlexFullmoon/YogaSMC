@@ -52,6 +52,8 @@ struct __attribute__((packed)) WMI_DATA
 
 extern "C" int ds_dec(void* pin,int lin, void* pout, int lout, int flg);
 
+#define BMF_MAX_SIZE 0x40000
+
 // Convert UUID to little endian
 void le_uuid_dec(uuid_t *in, uuid_t *out)
 {
@@ -340,28 +342,44 @@ bool WMI::parseBMF()
     OSData *data;
     if (!(data = OSDynamicCast(OSData, bmf))) {
         AlwaysLog("BMF not a data blob");
+        OSSafeReleaseNULL(bmf);
         return false;
     }
 
     uint32_t len = data->getLength();
     if (len <= 16) {
         AlwaysLog("BMF too short");
+        OSSafeReleaseNULL(data);
         return false;
     }
 
     uint32_t *pin = (uint32_t *)(data->getBytesNoCopy());
     if (pin[0] != 0x424D4F46 || pin[1] != 0x01 || pin[2] != len-16) {
         AlwaysLog("BMF format invalid");
+        OSSafeReleaseNULL(data);
         return false;
     }
 
 #ifdef DEBUG
     mDevice->setProperty("BMF size", data->getLength(), sizeof(unsigned int)*8);
 #endif
+    // Decompressed size comes from firmware, same limit as bmfdec
     uint32_t size = pin[3];
+    if (size == 0 || size > BMF_MAX_SIZE) {
+        AlwaysLog("BMF size 0x%x invalid", size);
+        OSSafeReleaseNULL(data);
+        return false;
+    }
     char *pout = new char[size];
+    if (!pout) {
+        AlwaysLog("BMF allocation failed");
+        OSSafeReleaseNULL(data);
+        return false;
+    }
     if (ds_dec((char *)pin+16, len-16, pout, size, 0) != size) {
         AlwaysLog("BMF Decompress failed");
+        delete[] pout;
+        OSSafeReleaseNULL(data);
         return false;
     }
     pin = nullptr;

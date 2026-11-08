@@ -28,32 +28,28 @@
 #define ECReadCap    BIT(0)
 #define ECWriteCap   BIT(1)
 
+// Must be used directly in the loop over properties: continue skips to the next key
+// (inside do { } while (0) it would only leave the macro and go on with nullptr)
 #define getPropertyBoolean(prompt)     \
-    do { \
-        value = OSDynamicCast(OSBoolean, dict->getObject(prompt));   \
-        if (value == nullptr) { \
-            AlwaysLog(valueInvalid, prompt);  \
-            continue;   \
-        } \
-    } while (0)
+    value = OSDynamicCast(OSBoolean, dict->getObject(prompt));   \
+    if (value == nullptr) { \
+        AlwaysLog(valueInvalid, prompt);  \
+        continue;   \
+    }
 
 #define getPropertyNumber(prompt)     \
-    do { \
-        value = OSDynamicCast(OSNumber, dict->getObject(prompt));   \
-        if (value == nullptr) { \
-            AlwaysLog(valueInvalid, prompt);  \
-            continue;   \
-        } \
-    } while (0)
+    value = OSDynamicCast(OSNumber, dict->getObject(prompt));   \
+    if (value == nullptr) { \
+        AlwaysLog(valueInvalid, prompt);  \
+        continue;   \
+    }
 
 #define getPropertyString(prompt)     \
-    do { \
-        value = OSDynamicCast(OSString, dict->getObject(prompt));   \
-        if (value == nullptr) { \
-            AlwaysLog(valueInvalid, prompt);  \
-            continue;   \
-        } \
-    } while (0)
+    value = OSDynamicCast(OSString, dict->getObject(prompt));   \
+    if (value == nullptr) { \
+        AlwaysLog(valueInvalid, prompt);  \
+        continue;   \
+    }
 
 #define setPropertyBoolean(dict, name, boolean) \
     do { dict->setObject(name, boolean ? kOSBooleanTrue : kOSBooleanFalse); } while (0)

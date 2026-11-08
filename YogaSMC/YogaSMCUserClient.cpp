@@ -104,7 +104,8 @@ IOReturn YogaSMCUserClient::readEC(UInt64 offset, UInt8* output, IOByteCount *ou
         return kIOReturnBadArgument;
     }
 
-    if (offset + *outputSizeP > 0x100) {
+    // offset is 64-bit from userspace, so check it alone before adding the size
+    if (offset >= 0x100 || *outputSizeP == 0 || *outputSizeP > 0x100 - offset) {
         AlwaysLog("%s invalid range", __FUNCTION__);
         return kIOReturnBadArgument;
     }
@@ -167,20 +168,25 @@ IOReturn YogaSMCUserClient::readECName(char* name, UInt8* output) {
     if (!fProvider || !fProvider->isOpen(this))
         return kIOReturnNotReady;
 
+    // name is a 4-byte struct from userspace without a terminating zero
+    char path[5];
+    memcpy(path, name, 4);
+    path[4] = '\0';
+
     UInt32 result = 0;
-    if (fProvider->ec->evaluateInteger(name, &result) != kIOReturnSuccess) {
-        AlwaysLog("%s read %s failed", __FUNCTION__, name);
+    if (fProvider->ec->evaluateInteger(path, &result) != kIOReturnSuccess) {
+        AlwaysLog("%s read %s failed", __FUNCTION__, path);
         return kIOReturnIOError;
     }
 
     *output = result;
 
-    DebugLog("%s @ %s", __FUNCTION__, name);
+    DebugLog("%s @ %s", __FUNCTION__, path);
     return kIOReturnSuccess;
 }
 
 IOReturn YogaSMCUserClient::registerNotificationPort(mach_port_t port, UInt32 type, io_user_reference_t refCon) {
-    if (!fProvider->isOpen(this) || !fProvider)
+    if (!fProvider || !fProvider->isOpen(this))
         return kIOReturnNotReady;
 
     if (fProvider->client) {

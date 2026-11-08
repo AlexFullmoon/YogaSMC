@@ -21,12 +21,14 @@ OSString *MOF::parse_string(char *buf, uint32_t size) {
     errors("invalid size");
     return OSString::withCString("invalid size");
   }
-  char *out = reinterpret_cast<char *>(IOMalloc(size+1));
+  // UTF-8 takes up to 3 bytes per UTF-16 unit (a surrogate pair is 4 bytes for 2 units)
+  uint32_t outSize = size / 2 * 3 + 1;
+  char *out = reinterpret_cast<char *>(IOMalloc(outSize));
   if (!out) {
     errors("malloc failed");
     return OSString::withCString("malloc failed");
   }
-  bzero(out, size+1);
+  bzero(out, outSize);
 
   uint32_t i, j;
   for (i=0, j=0; i<size/2; ++i) {
@@ -59,7 +61,7 @@ OSString *MOF::parse_string(char *buf, uint32_t size) {
   }
   out[j] = 0;
   OSString *ret = OSString::withCString(out);
-  IOFree(out, size+1);
+  IOFree(out, outSize);
   return ret;
 }
 
