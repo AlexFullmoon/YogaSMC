@@ -57,7 +57,7 @@ func notificationCallback(
     }
 
     if #available(macOS 10.12, *) {
-        os_log("Event 0x%04x:%d", type: .info, notification.event, notification.data)
+        os_log("Event 0x%04x:%d", type: .debug, notification.event, notification.data)
     }
 
     if let desc = customHotkey(notification.event) {

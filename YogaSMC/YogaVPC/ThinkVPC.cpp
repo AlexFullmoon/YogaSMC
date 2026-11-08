@@ -107,7 +107,7 @@ void ThinkVPC::clientClosed() {
             method_we1b(TP_EC_FAN_LEVEL, TP_EC_FAN_AUTO) != kIOReturnSuccess)
             AlwaysLog("Failed to set fan %d to auto", fan);
         else
-            AlwaysLog("Fan %d set to auto, client closed", fan);
+            DebugLog("Fan %d set to auto, client closed", fan);
     }
     if (restoreSelect)
         method_we1b(TP_EC_FAN_SELECT, select);

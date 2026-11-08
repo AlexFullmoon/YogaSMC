@@ -509,13 +509,15 @@ void YogaVPC::initDYTC() {
 }
 
 bool YogaVPC::parseDYTC(DYTC_RESULT result, bool probe) {
+#ifdef DEBUG
     // Log changes of the active function, to see when firmware switches it (e.g. to CSC)
     if (result.get.funcmode != DYTCLoggedFunc || result.get.func_sta != DYTCLoggedStatus) {
-        AlwaysLog("%s function 0x%x mode 0x%x status 0x%04x", DYTCPrompt,
+        DebugLog("%s function 0x%x mode 0x%x status 0x%04x", DYTCPrompt,
                   result.get.funcmode, result.get.perfmode, result.get.func_sta);
         DYTCLoggedFunc = result.get.funcmode;
         DYTCLoggedStatus = result.get.func_sta;
     }
+#endif
 
     OSDictionary *DYTCStatus = OSDictionary::withDictionary(DYTCVersion);
     OSObject *value;

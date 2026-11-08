@@ -114,7 +114,7 @@ void YogaISH::prepareDevice() {
             pci->configWrite16((UInt8)(pmOffset + 4), (UInt16)(pmcsr & ~3));
             IOSleep(10);
             if (pci->configRead32((UInt8)kIOPCIConfigBaseAddress0) != bar0) {
-                AlwaysLog("restoring BAR0 after D0 transition");
+                DebugLog("restoring BAR0 after D0 transition");
                 pci->configWrite32((UInt8)kIOPCIConfigBaseAddress0, bar0);
                 pci->configWrite32((UInt8)kIOPCIConfigBaseAddress1, bar1);
             }
@@ -219,7 +219,7 @@ void YogaISH::requestNextProps() {
     }
 
     // All properties received, ask system state client to subscribe
-    AlwaysLog("ISHTP bus up, %u FW clients", clientCount);
+    DebugLog("ISHTP bus up, %u FW clients", clientCount);
     setState(kStateRunning);
     UInt32 query[2] = {SYSTEM_STATE_QUERY_SUBSCRIBERS, 0};
     sendISHTP(ISHTP_SYSTEM_STATE_CLIENT_ADDR, query, sizeof(query));

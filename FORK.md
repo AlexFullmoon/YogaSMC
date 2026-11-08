@@ -47,7 +47,7 @@ Release builds log only errors and a few notices. The driver logs with `IOLog`; 
 sudo dmesg | grep YSMC
 ```
 
-YogaSMCNC logs through `os_log`, readable with `/usr/bin/log show --info --predicate 'process == "YogaSMCNC"'`. Call `/usr/bin/log` by full path in zsh: `log` is a zsh builtin and shadows it, returning nothing.
+YogaSMCNC logs through `os_log`, readable with `/usr/bin/log show --info --debug --predicate 'process == "YogaSMCNC"'`; every received event is logged at debug level as `Event 0x…`, which helps to find the code of a new key. Call `/usr/bin/log` by full path in zsh: `log` is a zsh builtin and shadows it, returning nothing.
 
 `YogaISH` must not run together with any other ISH driver. In particular, remove the standalone test kext (`ISHTest.kext`) from OpenCore if it was used.
 
@@ -68,7 +68,7 @@ Named `VCSC` in the DSDT `DYTC` method; often expanded as "Cool Start Control", 
 
 YogaSMC shows it as `CSC` with Balance. Choosing a mode in the pane sends RESET before SET, which clears CSC, so the chosen mode takes effect. Linux `thinkpad_acpi` sends SET without RESET, so there CSC keeps masking the profile. The driver does not remember the chosen mode across boots.
 
-The driver logs every change of the active function and status bitmap (`DYTC function … status …`) to dmesg.
+Debug builds log every change of the active function and status bitmap (`DYTC function … status …`) to dmesg.
 
 ## Fn keys
 

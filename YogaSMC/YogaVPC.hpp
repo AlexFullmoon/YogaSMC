@@ -77,11 +77,13 @@ private:
     UInt8 DYTCFuncMode {DYTC_FUNCTION_STD};
     UInt8 DYTCPerfMode {DYTC_MODE_BALANCE};
 
+#ifdef DEBUG
     /**
      *  Active function and status last written to the log
      */
     UInt8 DYTCLoggedFunc {0xff};
     UInt16 DYTCLoggedStatus {0};
+#endif
     
     /**
      *  Set DYTC mode
