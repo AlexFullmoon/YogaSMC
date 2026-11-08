@@ -150,7 +150,6 @@ extension YogaSMCPane {
         _ = updateThinkBattery(vSecondaryChargeThresholdStart, vSecondaryChargeThresholdStop)
 
         if let val = props["FnlockMode"] as? Bool {
-            vFnKeyRadio.title = "FnKey"
             vFnKeyRadio.isEnabled = true
             vFxKeyRadio.isEnabled = true
             if val {
@@ -188,34 +187,28 @@ private class HotkeyRow: NSObject {
     let option = NSTextField(frame: .zero)
     let choose = NSButton(frame: .zero)
 
-    init(_ event: UInt32, _ name: String, _ defaults: UserDefaults, _ view: NSView, _ y: CGFloat) {
+    init(_ event: UInt32, _ defaults: UserDefaults) {
         self.event = event
         self.defaults = defaults
         super.init()
 
-        let label = NSTextField(labelWithString: name)
-        label.frame = NSRect(x: 20, y: y + 3, width: 60, height: 17)
-        view.addSubview(label)
-
-        type.frame = NSRect(x: 85, y: y, width: 130, height: 25)
         type.addItems(withTitles: ["Default", "Launch app", "AppleScript"])
         type.target = self
         type.action = #selector(typeChanged)
-        view.addSubview(type)
+        type.toolTip = "Default keeps the built-in action of the key."
 
-        option.frame = NSRect(x: 222, y: y + 2, width: 290, height: 22)
         option.target = self
         option.action = #selector(save)
         option.lineBreakMode = .byTruncatingMiddle
         option.cell?.sendsActionOnEndEditing = true
-        view.addSubview(option)
+        option.toolTip = "App name or path, or AppleScript source. For a long script use run script POSIX file \"/path/x.scpt\"."
+        option.widthAnchor.constraint(equalToConstant: 230).isActive = true
 
-        choose.frame = NSRect(x: 515, y: y - 2, width: 90, height: 32)
         choose.title = "Choose…"
         choose.bezelStyle = .rounded
         choose.target = self
         choose.action = #selector(chooseApp)
-        view.addSubview(choose)
+        choose.toolTip = "Pick an application."
 
         if let entry = entries[key] as? [String: String] {
             switch entry["action"] {
@@ -274,19 +267,105 @@ extension YogaSMCPane {
         guard mainTabView.indexOfTabViewItem(withIdentifier: "Hotkeys") == NSNotFound else { return }
         let item = NSTabViewItem(identifier: "Hotkeys")
         item.label = "Hotkeys"
-        let view = NSView(frame: mainTabView.contentRect)
-        var y = view.frame.height - 45
+        var rows: [[NSView]] = []
         for hotkey in customHotkeys {
-            hotkeyRows.append(HotkeyRow(hotkey.event, hotkey.name, defaults, view, y))
-            y -= 35
+            let row = HotkeyRow(hotkey.event, defaults)
+            hotkeyRows.append(row)
+            rows.append([NSTextField(labelWithString: hotkey.name + ":"), makeRow([row.type, row.option, row.choose])])
         }
-        let note = NSTextField(wrappingLabelWithString:
-            "Default keeps the built-in action. Changes apply immediately. " +
-            "AppleScript actions need Accessibility and Automation permissions for YogaSMCNC.")
-        note.frame = NSRect(x: 20, y: y - 30, width: 585, height: 40)
-        note.textColor = .secondaryLabelColor
-        view.addSubview(note)
-        item.view = view
+        rows.append([makeNote("Changes apply on the next key press. AppleScript actions need Accessibility " +
+                              "and Automation permissions for YogaSMCNC.")])
+        let section = makeSection("Custom key actions", rows)
+        (section.contentView?.subviews.first as? NSGridView)?.column(at: 0).width = 60
+        item.view = makeTabContent([section])
         mainTabView.addTabViewItem(item)
+    }
+}
+
+// MARK: - Layout
+
+extension YogaSMCPane {
+    func buildThinkTab() {
+        // Charge thresholds
+        func thresholdRow(_ name: String, _ tag: Int) -> (NSTextField, NSTextField, [NSView]) {
+            let start = makeNumberField(100, #selector(vChargeThresholdStartSet),
+                "Start charging when the level drops below this. 0 = firmware default.", tag: tag)
+            let stop = makeNumberField(100, #selector(vChargeThresholdStopSet),
+                "Stop charging at this level. 100 = no limit.", tag: tag)
+            start.isEnabled = false
+            stop.isEnabled = false
+            return (start, stop, [NSTextField(labelWithString: name),
+                    makeRow([NSTextField(labelWithString: "start"), start, NSTextField(labelWithString: "%   stop"),
+                             stop, NSTextField(labelWithString: "%")])])
+        }
+        let any = thresholdRow("Both batteries:", 0)
+        let primary = thresholdRow("Primary battery:", 1)
+        let secondary = thresholdRow("Secondary battery:", 2)
+        (vChargeThresholdStart, vChargeThresholdStop) = (any.0, any.1)
+        (vPrimaryChargeThresholdStart, vPrimaryChargeThresholdStop) = (primary.0, primary.1)
+        (vSecondaryChargeThresholdStart, vSecondaryChargeThresholdStop) = (secondary.0, secondary.1)
+        let charge = makeSection("Charge thresholds", [
+            any.2, primary.2, secondary.2,
+            [makeNote("Stored by the EC, so they apply in every OS. Press Enter or leave the field to save; " +
+                      "red means the pair is invalid and was not saved.")]
+        ])
+
+        // LEDs
+        indicatorCheck = makeCheckbox("Blink the lid logo dot while asleep", #selector(autoBacklightSet),
+            "Show sleep state on the ThinkPad logo dot and power LED, like Windows does.")
+        micMuteCheck = makeCheckbox("Turn off the mic mute LED while asleep", #selector(autoBacklightSet),
+            "Turn the mic mute LED off before sleep and restore it on wake.")
+        muteCheck = makeCheckbox("Turn off the mute LED while asleep", #selector(autoBacklightSet),
+            "Turn the speaker mute LED off before sleep and restore it on wake. Experimental.")
+        vMuteLEDFixup = makeCheckbox("Keep the mute LED in sync with system mute", #selector(vMuteLEDFixupSet),
+            "YogaSMCNC sets the speaker mute LED whenever macOS output is muted or unmuted.")
+        let automation = makeSection("LEDs, automatic", [[indicatorCheck], [micMuteCheck], [muteCheck], [vMuteLEDFixup]])
+
+        let modes = ["Off", "On", "Pulse", "Blink"]
+        vPowerLEDSlider = makeSlider(3, #selector(vPowerLEDSet), "Power button LED.", width: 160)
+        vStandbyLEDSlider = makeSlider(3, #selector(vStandbyLEDSet), "Standby LED, on models that have one.", width: 160)
+        let thinkDot = makeSlider(3, #selector(vThinkDotSet), "ThinkPad logo dot on the lid.", width: 160)
+        vThinkDotSlider = thinkDot.cell as? NSSliderCell
+        vCustomLEDSlider = makeSlider(3, #selector(vCustomLEDSet), "LED selected in the list.", width: 160)
+        for slider in [vPowerLEDSlider, vStandbyLEDSlider, thinkDot, vCustomLEDSlider] {
+            slider?.isEnabled = false
+        }
+        vCustomLEDList = NSPopUpButton(frame: .zero, pullsDown: false)
+        vCustomLEDList.addItems(withTitles: ["power", "orange:batt", "green:batt", "dock_active", "bay_active",
+                                             "dock_batt", "fnlock", "standby", "dock_status1", "dock_status2",
+                                             "thinkdot", "unknown_led3", "thinkvantage", "caps_lock", "mic_mute",
+                                             "unknown_led6"])
+        vCustomLEDList.toolTip = "LED number for the slider on the right. Most of them do not exist on a given model."
+        let manual = makeSection("LEDs, manual", [
+            [makeNote("Sets the LED right away. The sliders do not show the current state; " +
+                      "nothing is saved, sleep and other events may change the LED again.")],
+            [NSTextField(labelWithString: "Power button:"), captionedSlider(vPowerLEDSlider, modes).0],
+            [NSTextField(labelWithString: "Standby:"), captionedSlider(vStandbyLEDSlider, modes).0],
+            [NSTextField(labelWithString: "Lid logo dot:"), captionedSlider(thinkDot, modes).0],
+            [vCustomLEDList, captionedSlider(vCustomLEDSlider, modes).0]
+        ])
+
+        // Fan
+        vFanStop = makeCheckbox("Allow stopping the fan", #selector(vFanStopSet),
+            "Let the fan slider in the menu go down to 0. Off by default, the lowest manual level is 1.")
+        vSaveFanLevel = makeCheckbox("Remember manual fan level", #selector(vSaveFanLevelSet),
+            "Set the last manual fan level again when YogaSMCNC starts.")
+        vDisableFan = makeCheckbox("Hide fan controls in the menu", #selector(vDisableFanSet),
+            "Do not show the fan slider and Auto button in the YogaSMCNC menu.")
+        vSecondFan = makeCheckbox("Show second fan", #selector(vSecondFanSet),
+            "Control the second fan on models that have two.")
+        vSecondFan.isEnabled = false
+        let fan = makeSection("Fan (YogaSMCNC menu)", [[vFanStop], [vSaveFanLevel], [vDisableFan], [vSecondFan]])
+
+        thinkViewItem.view = makeTabContent([charge, automation, manual, fan])
+    }
+
+    func updateThinkLayout() {
+        setRowHidden(vChargeThresholdStart, !vChargeThresholdStart.isEnabled)
+        setRowHidden(vSecondaryChargeThresholdStart, !vSecondaryChargeThresholdStart.isEnabled)
+        setRowHidden(vSecondFan, !vSecondFan.isEnabled)
+        #if !DEBUG
+        setRowHidden(muteCheck, true)
+        #endif
     }
 }

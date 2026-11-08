@@ -8,7 +8,7 @@ This is a fork of [zhen-zen/YogaSMC](https://github.com/zhen-zen/YogaSMC), maint
 - **Fn keys**: Fn-F7 toggles display mirroring, Fn-F9 opens Notification Center, Fn-PrtSc opens Screenshot. Fn-Tab, Fn-F10, Fn-F11 and Fn-F12 can launch an app or run an AppleScript, set in the new Hotkeys tab of YogaSMCPane.
 - **YogaSMCNC** saves only events that differ from the built-in table, so fixes to defaults are no longer masked by an old saved copy.
 
-Technical details are in [FORK.md](FORK.md).
+Technical details are in [FORK.md](FORK.md), what each prefpane control does is in [PREFPANE.md](PREFPANE.md).
 
 ## Original description
 

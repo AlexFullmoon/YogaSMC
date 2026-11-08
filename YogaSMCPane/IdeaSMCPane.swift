@@ -28,6 +28,12 @@ extension YogaSMCPane {
         }
     }
 
+    @IBAction func vRapidChargeModeSet(_ sender: NSButton) {
+        if !sendBoolean("RapidChargeMode", vRapidChargeMode.state == .on, service) {
+            vRapidChargeMode.state = getBoolean("RapidChargeMode", service) ? .on : .off
+        }
+    }
+
     func updateIdeaBattery(_ dict: NSDictionary) {
         vBatteryID.stringValue = dict["ID"] as? String ?? "Unknown"
         vCycleCount.stringValue = dict["Cycle count"] as? String ?? "Unknown"
@@ -100,5 +106,46 @@ extension YogaSMCPane {
         if let dict = props["Capability"] as? NSDictionary {
             updateIdeaCap(dict)
         }
+    }
+
+    func buildIdeaTab() {
+        vConservationMode = makeCheckbox("Conservation mode", #selector(vConservationModeSet),
+            "Keep the battery charged to about 60% to extend its life, for a machine that stays on AC.")
+        vRapidChargeMode = makeCheckbox("Rapid charge", #selector(vRapidChargeModeSet),
+            "Charge faster at the cost of battery wear. Usually cannot be combined with conservation mode.")
+        vAlwaysOnUSBMode = makeCheckbox("Keep USB powered while asleep or off", #selector(vAlwaysOnUSBModeSet),
+            "Always On USB: the yellow USB port keeps supplying power, for charging devices.")
+        for box in [vConservationMode, vRapidChargeMode, vAlwaysOnUSBMode] {
+            box?.isEnabled = false
+        }
+        vBatteryID = NSTextField(labelWithString: "Unknown")
+        vCycleCount = NSTextField(labelWithString: "Unknown")
+        vBatteryTemperature = NSTextField(labelWithString: "Unknown")
+        vMfgDate = NSTextField(labelWithString: "Unknown")
+        let battery = makeSection("Battery", [
+            [vConservationMode], [vRapidChargeMode],
+            [NSTextField(labelWithString: "ID:"), vBatteryID],
+            [NSTextField(labelWithString: "Cycle count:"), vCycleCount],
+            [NSTextField(labelWithString: "Temperature:"), vBatteryTemperature],
+            [NSTextField(labelWithString: "Manufacture date:"), vMfgDate]
+        ])
+        let usb = makeSection("USB", [[vAlwaysOnUSBMode]])
+
+        vCamera = NSTextField(labelWithString: "Camera")
+        vBluetooth = NSTextField(labelWithString: "Bluetooth")
+        vWireless = NSTextField(labelWithString: "Wireless")
+        vWWAN = NSTextField(labelWithString: "WWAN")
+        vGraphics = NSTextField(labelWithString: "Graphics")
+        for label in [vCamera, vBluetooth, vWireless, vWWAN, vGraphics] {
+            label?.textColor = .systemGray
+            label?.toolTip = "Green: present and on, gray: off or missing."
+        }
+        let hardware = makeSection("Hardware reported by firmware", [
+            [makeRow([vCamera, vBluetooth, vWireless, vWWAN, vGraphics])],
+            [makeNote("Green: present and on, gray: off or missing. Graphics color shows the vendor, " +
+                      "hover for the name.")]
+        ])
+
+        ideaViewItem.view = makeTabContent([battery, usb, hardware])
     }
 }

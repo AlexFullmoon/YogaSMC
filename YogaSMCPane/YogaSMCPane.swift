@@ -20,10 +20,10 @@ class YogaSMCPane: NSPreferencePane {
     let service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("YogaVPC"))
     let defaults = UserDefaults(suiteName: "org.zhen.YogaSMC")!
 
-    @IBOutlet weak var vVersion: NSTextField!
-    @IBOutlet weak var vClass: NSTextField!
-    @IBOutlet weak var vECRead: NSTextField!
-    @IBOutlet weak var vHideMenubarIcon: NSButton!
+    @IBOutlet var vVersion: NSTextField!
+    @IBOutlet var vClass: NSTextField!
+    @IBOutlet var vECRead: NSTextField!
+    @IBOutlet var vHideMenubarIcon: NSButton!
     @IBAction func toggleMenubarIcon(_ sender: NSButton) {
         if vHideMenubarIcon.state == .on {
             defaults.setValue(true, forKey: "HideIcon")
@@ -35,7 +35,7 @@ class YogaSMCPane: NSPreferencePane {
         _ = scriptHelper(reloadAS, "Reload YogaSMCNC")
     }
 
-    @IBOutlet weak var vMenubarIcon: NSTextField!
+    @IBOutlet var vMenubarIcon: NSTextField!
     @IBAction func setMenubarIcon(_ sender: NSTextField) {
         if vMenubarIcon.stringValue == "" {
             guard defaults.value(forKey: "Title") != nil else { return }
@@ -47,7 +47,7 @@ class YogaSMCPane: NSPreferencePane {
         _ = scriptHelper(reloadAS, "Reload YogaSMCNC")
     }
 
-    @IBOutlet weak var vHideCapsLock: NSButton!
+    @IBOutlet var vHideCapsLock: NSButton!
     @IBAction func toggleHideCapsLock(_ sender: NSButton) {
         defaults.setValue(vHideCapsLock.state == .on, forKey: "HideCapsLock")
         _ = scriptHelper(reloadAS, "Reload YogaSMCNC")
@@ -60,49 +60,49 @@ class YogaSMCPane: NSPreferencePane {
     }
 
     // Idea
-    @IBOutlet weak var vFnKeyRadio: NSButton!
-    @IBOutlet weak var vFxKeyRadio: NSButton!
+    @IBOutlet var vFnKeyRadio: NSButton!
+    @IBOutlet var vFxKeyRadio: NSButton!
 
-    @IBOutlet weak var vBatteryID: NSTextField!
-    @IBOutlet weak var vBatteryTemperature: NSTextField!
-    @IBOutlet weak var vCycleCount: NSTextField!
-    @IBOutlet weak var vMfgDate: NSTextField!
+    @IBOutlet var vBatteryID: NSTextField!
+    @IBOutlet var vBatteryTemperature: NSTextField!
+    @IBOutlet var vCycleCount: NSTextField!
+    @IBOutlet var vMfgDate: NSTextField!
 
-    @IBOutlet weak var vAlwaysOnUSBMode: NSButton!
-    @IBOutlet weak var vConservationMode: NSButton!
-    @IBOutlet weak var vRapidChargeMode: NSButton!
+    @IBOutlet var vAlwaysOnUSBMode: NSButton!
+    @IBOutlet var vConservationMode: NSButton!
+    @IBOutlet var vRapidChargeMode: NSButton!
 
-    @IBOutlet weak var vCamera: NSTextField!
-    @IBOutlet weak var vBluetooth: NSTextField!
-    @IBOutlet weak var vWireless: NSTextField!
-    @IBOutlet weak var vWWAN: NSTextField!
-    @IBOutlet weak var vGraphics: NSTextField!
+    @IBOutlet var vCamera: NSTextField!
+    @IBOutlet var vBluetooth: NSTextField!
+    @IBOutlet var vWireless: NSTextField!
+    @IBOutlet var vWWAN: NSTextField!
+    @IBOutlet var vGraphics: NSTextField!
 
     // Think
 
-    @IBOutlet weak var vChargeThresholdStart: NSTextField!
-    @IBOutlet weak var vChargeThresholdStop: NSTextField!
-    @IBOutlet weak var vPrimaryChargeThresholdStart: NSTextField!
-    @IBOutlet weak var vPrimaryChargeThresholdStop: NSTextField!
-    @IBOutlet weak var vSecondaryChargeThresholdStart: NSTextField!
-    @IBOutlet weak var vSecondaryChargeThresholdStop: NSTextField!
+    @IBOutlet var vChargeThresholdStart: NSTextField!
+    @IBOutlet var vChargeThresholdStop: NSTextField!
+    @IBOutlet var vPrimaryChargeThresholdStart: NSTextField!
+    @IBOutlet var vPrimaryChargeThresholdStop: NSTextField!
+    @IBOutlet var vSecondaryChargeThresholdStart: NSTextField!
+    @IBOutlet var vSecondaryChargeThresholdStop: NSTextField!
 
-    @IBOutlet weak var vPowerLEDSlider: NSSlider!
-    @IBOutlet weak var vStandbyLEDSlider: NSSlider!
-    @IBOutlet weak var vThinkDotSlider: NSSliderCell!
-    @IBOutlet weak var vCustomLEDSlider: NSSlider!
-    @IBOutlet weak var vCustomLEDList: NSPopUpButton!
+    @IBOutlet var vPowerLEDSlider: NSSlider!
+    @IBOutlet var vStandbyLEDSlider: NSSlider!
+    @IBOutlet var vThinkDotSlider: NSSliderCell!
+    @IBOutlet var vCustomLEDSlider: NSSlider!
+    @IBOutlet var vCustomLEDList: NSPopUpButton!
 
-    @IBOutlet weak var vSecondFan: NSButton!
-    @IBOutlet weak var vFanStop: NSButton!
-    @IBOutlet weak var vDisableFan: NSButton!
-    @IBOutlet weak var vSaveFanLevel: NSButton!
+    @IBOutlet var vSecondFan: NSButton!
+    @IBOutlet var vFanStop: NSButton!
+    @IBOutlet var vDisableFan: NSButton!
+    @IBOutlet var vSaveFanLevel: NSButton!
 
-    @IBOutlet weak var vMuteLEDFixup: NSButton!
+    @IBOutlet var vMuteLEDFixup: NSButton!
 
     // Main
 
-    @IBOutlet weak var mainTabView: NSTabView!
+    @IBOutlet var mainTabView: NSTabView!
     // strong, removed items are released by the tab view and willSelect runs on every reopen
     @IBOutlet var ideaViewItem: NSTabViewItem!
     @IBOutlet var thinkViewItem: NSTabViewItem!
@@ -113,28 +113,33 @@ class YogaSMCPane: NSPreferencePane {
         }
     }
 
-    @IBOutlet weak var vDYTCRevision: NSTextField!
-    @IBOutlet weak var vDYTCFuncMode: NSTextField!
-    @IBOutlet weak var DYTCSlider: NSSlider!
-    @IBOutlet weak var DYTCPSCCheck: NSButton!
+    @IBOutlet var vDYTCRevision: NSTextField!
+    @IBOutlet var vDYTCFuncMode: NSTextField!
+    @IBOutlet var DYTCSlider: NSSlider!
+    @IBOutlet var DYTCPSCCheck: NSButton!
 
-    @IBOutlet weak var backlightSlider: NSSlider!
-    @IBOutlet weak var vBackLightTimeout: NSTextField!
+    @IBOutlet var backlightSlider: NSSlider!
+    @IBOutlet var vBackLightTimeout: NSTextField!
 
-    @IBOutlet weak var autoSleepCheck: NSButton!
-    @IBOutlet weak var yogaModeCheck: NSButton!
-    @IBOutlet weak var indicatorCheck: NSButton!
-    @IBOutlet weak var muteCheck: NSButton!
-    @IBOutlet weak var micMuteCheck: NSButton!
+    @IBOutlet var autoSleepCheck: NSButton!
+    @IBOutlet var yogaModeCheck: NSButton!
+    @IBOutlet var indicatorCheck: NSButton!
+    @IBOutlet var muteCheck: NSButton!
+    @IBOutlet var micMuteCheck: NSButton!
 
-    @IBOutlet weak var vClamshellMode: NSButton!
+    @IBOutlet var vClamshellMode: NSButton!
 
     override func mainViewDidLoad() {
         super.mainViewDidLoad()
         if #available(macOS 10.12, *) {
             os_log(#function, type: .info)
         }
-        // nothing
+        // Use the height System Settings gives to panes, the tabs scroll if needed
+        mainView.setFrameSize(NSSize(width: mainView.frame.width, height: 560))
+        mainTabView.frame = NSRect(x: 13, y: 2, width: mainView.frame.width - 26, height: 546)
+        buildGeneralTab()
+        buildThinkTab()
+        buildIdeaTab()
     }
 
     override func willSelect() {
@@ -177,6 +182,7 @@ class YogaSMCPane: NSPreferencePane {
         case "ThinkVPC":
             vClass.stringValue = "Think"
             updateThink(props)
+            updateThinkLayout()
             addHotkeysTab()
             #if !DEBUG
             removeTab(ideaViewItem)
@@ -190,5 +196,6 @@ class YogaSMCPane: NSPreferencePane {
             removeTab(ideaViewItem)
             removeTab(thinkViewItem)
         }
+        updateGeneralLayout(props)
     }
 }
