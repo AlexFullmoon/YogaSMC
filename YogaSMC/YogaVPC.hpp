@@ -324,6 +324,16 @@ public:
      *  VPC UserClient
      */
     YogaSMCUserClient *client {nullptr};
+
+    /**
+     *  EC byte written by the user client, see ThinkVPC fan handling
+     */
+    virtual void clientWroteEC(UInt32 offset, UInt8 value) {};
+
+    /**
+     *  User client closed, also when its process died
+     */
+    virtual void clientClosed() {};
 };
 
 #endif /* YogaVPC_hpp */

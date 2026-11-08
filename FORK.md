@@ -41,7 +41,13 @@ Only `8086:02FC` (Comet Lake-LP), the only device tested. Register layout is the
 
 `ioreg -l -c YogaISH` shows `State`: `WaitDevice`, `WaitReset`, `WaitFwReady`, `HbmStart`, `HbmEnum`, `HbmProps`, `Running`, `Suspended` or `Failed`. Debug builds also publish `FWSTS`, `Clients`, `ResetCount` and `WakeCount`, and log every step as `YSMC - Debug: ISHD::YogaISH ...`.
 
-Release builds log only errors. To read them in zsh, call `/usr/bin/log` by full path: `log` is a zsh builtin and shadows it, returning nothing.
+Release builds log only errors and a few notices. The driver logs with `IOLog`; for kexts injected by OpenCore these lines do not reach the unified log (`log show`), only the kernel message buffer:
+
+```
+sudo dmesg | grep YSMC
+```
+
+YogaSMCNC logs through `os_log`, readable with `/usr/bin/log show --info --predicate 'process == "YogaSMCNC"'`. Call `/usr/bin/log` by full path in zsh: `log` is a zsh builtin and shadows it, returning nothing.
 
 `YogaISH` must not run together with any other ISH driver. In particular, remove the standalone test kext (`ISHTest.kext`) from OpenCore if it was used.
 

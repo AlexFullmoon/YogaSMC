@@ -409,9 +409,27 @@ private:
      */
     bool setKBDLocale(UInt32 value);
 
+    /**
+     *  Fans set to a manual level through the user client, BIT(0) main, BIT(1) second;
+     *  put back to auto when the client goes away, so a fan never stays stopped
+     */
+    UInt8 manualFans {0};
+
+    /**
+     *  Select fan in EC, see ThinkFanHelper.switchFan
+     *
+     *  @param second true for the second fan
+     *
+     *  @return true if success
+     */
+    bool selectFan(bool second);
+
 public:
     IOReturn message(UInt32 type, IOService *provider, void *argument) APPLE_KEXT_OVERRIDE;
     IOReturn setPowerState(unsigned long powerStateOrdinal, IOService * whatDevice) APPLE_KEXT_OVERRIDE;
+
+    void clientWroteEC(UInt32 offset, UInt8 value) APPLE_KEXT_OVERRIDE;
+    void clientClosed() APPLE_KEXT_OVERRIDE;
 };
 
 #endif /* ThinkVPC_hpp */

@@ -89,6 +89,7 @@ IOReturn YogaSMCUserClient::userClientClose(void) {
         fProvider->client = nullptr;
         DebugLog("%s notification unregistered", __FUNCTION__);
     }
+    fProvider->clientClosed();
 
     fProvider->close(this);
     DebugLog("%s", __FUNCTION__);
@@ -159,6 +160,7 @@ IOReturn YogaSMCUserClient::writeEC(UInt64 offset, UInt8* input, IOByteCount inp
         AlwaysLog("%s we1b failed", __FUNCTION__);
         return kIOReturnIOError;
     }
+    fProvider->clientWroteEC(UInt32(offset), input[0]);
 
     DebugLog("%s @ 0x%02llx", __FUNCTION__, offset);
     return kIOReturnSuccess;

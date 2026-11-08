@@ -68,6 +68,52 @@ bool ThinkVPC::setConservation(const char * method, UInt8 value) {
     return true;
 }
 
+// EC fan registers, as used by ThinkFanHelper and Linux thinkpad_acpi
+#define TP_EC_FAN_LEVEL   0x2f    // bit 7 auto, bit 6 full speed, else level 0-7
+#define TP_EC_FAN_SELECT  0x31    // bit 0 selects the second fan
+#define TP_EC_FAN_AUTO    0x80
+
+bool ThinkVPC::selectFan(bool second) {
+    UInt8 select;
+    if (method_re1b(TP_EC_FAN_SELECT, &select) != kIOReturnSuccess)
+        return false;
+    if (((select & 0x1) != 0) == second)
+        return true;
+    return method_we1b(TP_EC_FAN_SELECT, second ? (select | 0x1) : (select & ~0x1)) == kIOReturnSuccess;
+}
+
+void ThinkVPC::clientWroteEC(UInt32 offset, UInt8 value) {
+    if (offset != TP_EC_FAN_LEVEL)
+        return;
+    UInt8 select = 0;
+    method_re1b(TP_EC_FAN_SELECT, &select);
+    UInt8 fan = (select & 0x1) ? BIT(1) : BIT(0);
+    if (value & TP_EC_FAN_AUTO)
+        manualFans &= ~fan;
+    else
+        manualFans |= fan;
+}
+
+void ThinkVPC::clientClosed() {
+    if (!manualFans)
+        return;
+
+    UInt8 select = 0;
+    bool restoreSelect = method_re1b(TP_EC_FAN_SELECT, &select) == kIOReturnSuccess;
+    for (int fan = 0; fan < 2; fan++) {
+        if (!(manualFans & BIT(fan)))
+            continue;
+        if ((fan == 1 && !selectFan(true)) || (fan == 0 && !selectFan(false)) ||
+            method_we1b(TP_EC_FAN_LEVEL, TP_EC_FAN_AUTO) != kIOReturnSuccess)
+            AlwaysLog("Failed to set fan %d to auto", fan);
+        else
+            AlwaysLog("Fan %d set to auto, client closed", fan);
+    }
+    if (restoreSelect)
+        method_we1b(TP_EC_FAN_SELECT, select);
+    manualFans = 0;
+}
+
 bool ThinkVPC::setChargeThreshold(bool stop, UInt32 value) {
     UInt32 start_cur, stop_cur;
     if (evaluateIntegerParam(getCMstart, &start_cur, batnum) != kIOReturnSuccess ||
