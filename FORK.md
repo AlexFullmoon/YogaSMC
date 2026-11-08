@@ -51,6 +51,25 @@ YogaSMCNC logs through `os_log`, readable with `/usr/bin/log show --info --predi
 
 `YogaISH` must not run together with any other ISH driver. In particular, remove the standalone test kext (`ISHTest.kext`) from OpenCore if it was used.
 
+## DYTC
+
+### Event loop under lap mode
+
+Reading DYTC under lap mode toggled CQL off and on, and every toggle raised another `0x6032` event, whose handler read DYTC again. CQL is now toggled only on explicit updates (start, wake, pane open); event handling shows the cached mode.
+
+### Function 0xE (CSC)
+
+Named `VCSC` in the DSDT `DYTC` method; often expanded as "Cool Start Control", not confirmed by any Lenovo document. From the DSDT:
+
+- on / off only (`ICMode` 0xF), no levels;
+- priority STP > MSC > AMT > MYH > PSC > CQL > **CSC** > DMC > MMC > STD, so while it is on, the MMC mode (Quiet / Balance / Performance) is not active;
+- the flag lives in firmware NVS (`MNVS`); the DSDT only sets it on a DYTC SET for 0xE and clears it on RESET, and nothing on macOS sends that SET, so the firmware enables it itself. On X1 Yoga Gen 5 it is on after a cold boot (`DYTC function 0xe mode 0xf status 0x4001` in dmesg);
+- it is passed to Intel DPTF as ODM variable 0x13 and applied through SMI `FLPF`; what that changes is not visible in ACPI.
+
+YogaSMC shows it as `CSC` with Balance. Choosing a mode in the pane sends RESET before SET, which clears CSC, so the chosen mode takes effect. Linux `thinkpad_acpi` sends SET without RESET, so there CSC keeps masking the profile. The driver does not remember the chosen mode across boots.
+
+The driver logs every change of the active function and status bitmap (`DYTC function … status …`) to dmesg.
+
 ## Fn keys
 
 HKEY events on X1 Yoga Gen 5 (all enabled by the default hotkey mask, sent from EC queries `_Q63`, `_Q65`, `_Q66`, `_Q60`):

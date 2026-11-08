@@ -509,6 +509,14 @@ void YogaVPC::initDYTC() {
 }
 
 bool YogaVPC::parseDYTC(DYTC_RESULT result, bool probe) {
+    // Log changes of the active function, to see when firmware switches it (e.g. to CSC)
+    if (result.get.funcmode != DYTCLoggedFunc || result.get.func_sta != DYTCLoggedStatus) {
+        AlwaysLog("%s function 0x%x mode 0x%x status 0x%04x", DYTCPrompt,
+                  result.get.funcmode, result.get.perfmode, result.get.func_sta);
+        DYTCLoggedFunc = result.get.funcmode;
+        DYTCLoggedStatus = result.get.func_sta;
+    }
+
     OSDictionary *DYTCStatus = OSDictionary::withDictionary(DYTCVersion);
     OSObject *value;
 
@@ -559,6 +567,12 @@ bool YogaVPC::parseDYTC(DYTC_RESULT result, bool probe) {
                     if (func_status)
                         DebugLog("DYTC_FUNCTION_PSC on");
                     setPropertyBoolean(functionStatus, "PSC", func_status);
+                    break;
+
+                case DYTC_FUNCTION_CSC:
+                    if (func_status)
+                        DebugLog("DYTC_FUNCTION_CSC on");
+                    setPropertyBoolean(functionStatus, "CSC", func_status);
                     break;
 
                 default:
@@ -617,6 +631,12 @@ bool YogaVPC::parseDYTC(DYTC_RESULT result, bool probe) {
         case DYTC_FUNCTION_PSC:
             setPropertyString(DYTCStatus, "FuncMode", "Controlled");
             setPropertyNumber(DYTCStatus, "PerfMode", result.get.perfmode, 16);
+            break;
+
+        // On / off only, enabled by firmware; setting a mode resets it
+        case DYTC_FUNCTION_CSC:
+            setPropertyString(DYTCStatus, "FuncMode", "CSC");
+            setPropertyString(DYTCStatus, "PerfMode", "Balance");
             break;
 
         default:

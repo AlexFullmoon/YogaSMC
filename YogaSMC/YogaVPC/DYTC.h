@@ -42,7 +42,7 @@ enum {
 #define DYTC_FUNCTION_DCC     6  /* aka AQM */
 #define DYTC_FUNCTION_SFN     7  /* priority 2 */
 #define DYTC_FUNCTION_FHP     9
-#define DYTC_FUNCTION_CSC   0xE
+#define DYTC_FUNCTION_CSC   0xE  /* on / off, priority between CQL and DMC, not set by the OS here */
 
 // Availeble mode
 #define DYTC_MODE_PERFORM     2  /* High power mode aka performance */

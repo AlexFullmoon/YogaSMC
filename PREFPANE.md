@@ -24,7 +24,7 @@ DYTC is Lenovo's thermal mode interface, the same one Windows uses for "Intellig
 | Control | Meaning |
 | ---- | ---- |
 | Mode | Quiet / Balance / Performance (MMC, desk mode). Disabled while the active function is one the driver cannot map to these modes. |
-| Active function | `Standard` (default balance), `Desk` (mode set here), `Lap` (lap mode, the firmware limits power while it thinks the machine is on a lap), `Controlled` (PSC), `Other (0xe)` (a function the driver does not handle, `CSC` in `DYTC.h`), followed by the DYTC revision. |
+| Active function | `Standard` (default balance), `Desk` (mode set here), `Lap` (lap mode, the firmware limits power while it thinks the machine is on a lap), `Controlled` (PSC), `CSC` (an on / off function the firmware enables by itself, e.g. after boot; choosing a mode here resets it), `Other (0x…)` (a function the driver does not handle), followed by the DYTC revision. |
 | Use PSC levels | Switches the slider to 9 raw PSC levels instead of the three modes. Shown when the firmware lists both MMC and PSC. Linux uses PSC only on AMD machines, so on Intel models leave it off. |
 
 ### Menu bar and notifications (YogaSMCNC settings)

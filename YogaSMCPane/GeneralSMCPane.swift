@@ -378,7 +378,8 @@ extension YogaSMCPane {
         dytcCaptions = captions
         vDYTCFuncMode = NSTextField(labelWithString: "Unknown")
         vDYTCFuncMode.toolTip = "Standard: default balance. Desk: mode set here. " +
-            "Lap: the firmware limits power while it thinks the laptop is on a lap. Controlled: PSC level."
+            "Lap: the firmware limits power while it thinks the laptop is on a lap. Controlled: PSC level. " +
+            "CSC: on / off function enabled by firmware, replaced by the mode chosen here."
         vDYTCRevision = NSTextField(labelWithString: "Unknown")
         vDYTCRevision.textColor = .secondaryLabelColor
         vDYTCRevision.toolTip = "DYTC interface version."
