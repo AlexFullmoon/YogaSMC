@@ -425,7 +425,7 @@ private:
     bool selectFan(bool second);
 
 public:
-    IOReturn message(UInt32 type, IOService *provider, void *argument) APPLE_KEXT_OVERRIDE;
+    IOReturn handleMessage(UInt32 type, IOService *provider, void *argument) APPLE_KEXT_OVERRIDE;
     IOReturn setPowerState(unsigned long powerStateOrdinal, IOService * whatDevice) APPLE_KEXT_OVERRIDE;
 
     void clientWroteEC(UInt32 offset, UInt8 value) APPLE_KEXT_OVERRIDE;

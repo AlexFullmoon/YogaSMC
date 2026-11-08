@@ -7,6 +7,7 @@
 //
 
 #include "YogaBaseService.hpp"
+#include <IOKit/IOUserClient.h>
 
 OSDefineMetaClassAndStructors(YogaBaseService, IOService)
 
@@ -79,15 +80,26 @@ bool YogaBaseService::start(IOService *provider)
     return true;
 }
 
+bool YogaBaseService::taskPrivileged(task_t task) {
+    return IOUserClient::clientHasPrivilege(task, kIOClientPrivilegeAdministrator) == kIOReturnSuccess ||
+           IOUserClient::clientHasPrivilege(task, kIOClientPrivilegeLocalUser) == kIOReturnSuccess;
+}
+
 void YogaBaseService::stop(IOService *provider)
 {
-    _publishNotify->remove();
-    _terminateNotify->remove();
-    _notificationServices->flushCollection();
+    if (_publishNotify)
+        _publishNotify->remove();
+    if (_terminateNotify)
+        _terminateNotify->remove();
+    _publishNotify = nullptr;
+    _terminateNotify = nullptr;
+    if (_notificationServices)
+        _notificationServices->flushCollection();
     OSSafeReleaseNULL(_notificationServices);
     OSSafeReleaseNULL(_deliverNotification);
 
-    workLoop->removeEventSource(commandGate);
+    if (workLoop && commandGate)
+        workLoop->removeEventSource(commandGate);
     OSSafeReleaseNULL(commandGate);
     OSSafeReleaseNULL(workLoop);
 

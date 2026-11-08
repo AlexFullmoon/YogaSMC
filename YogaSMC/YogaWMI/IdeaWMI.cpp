@@ -227,6 +227,8 @@ void IdeaWMISuperRes::processWMI() {
 }
 
 IOReturn IdeaWMISuperRes::setProperties(OSObject *props) {
+    if (!taskPrivileged(current_task()))
+        return kIOReturnNotPrivileged;
     commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &IdeaWMISuperRes::setPropertiesGated), props);
     return kIOReturnSuccess;
 }

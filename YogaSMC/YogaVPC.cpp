@@ -346,6 +346,8 @@ void YogaVPC::setPropertiesGated(OSObject* props) {
 }
 
 IOReturn YogaVPC::setProperties(OSObject *props) {
+    if (!taskPrivileged(current_task()))
+        return kIOReturnNotPrivileged;
     commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &YogaVPC::setPropertiesGated), props);
     return kIOReturnSuccess;
 }
@@ -724,6 +726,23 @@ bool YogaVPC::dumpECOffset(UInt32 value) {
 }
 
 IOReturn YogaVPC::message(UInt32 type, IOService *provider, void *argument) {
+    // ACPI notifications arrive on their own thread: serialize them with setProperties,
+    // timers and the user client. Other messages (VoodooPS2, SMC) stay direct, their
+    // senders hold their own gates and may wait for us, which could deadlock.
+    if (type != kIOACPIMessageDeviceNotification || !commandGate)
+        return handleMessage(type, provider, argument);
+
+    IOReturn ret = kIOReturnSuccess;
+    commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &YogaVPC::messageGated),
+                           &type, provider, argument, &ret);
+    return ret;
+}
+
+void YogaVPC::messageGated(UInt32 *type, IOService *provider, void *argument, IOReturn *ret) {
+    *ret = handleMessage(*type, provider, argument);
+}
+
+IOReturn YogaVPC::handleMessage(UInt32 type, IOService *provider, void *argument) {
     switch (type)
     {
         case kSMC_setDisableTouchpad:

@@ -183,6 +183,15 @@ public:
 
     void dispatchMessage(int message, void* data);
 
+    /**
+     *  Whether a task may change settings or access EC: root or the user logged in at the console
+     *
+     *  @param task calling task
+     *
+     *  @return true if allowed
+     */
+    static bool taskPrivileged(task_t task);
+
     virtual IOReturn setPowerState(unsigned long powerStateOrdinal, IOService * whatDevice) APPLE_KEXT_OVERRIDE;
 
     friend class YogaSMCUserClient;

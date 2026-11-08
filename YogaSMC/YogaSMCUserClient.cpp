@@ -85,11 +85,17 @@ IOReturn YogaSMCUserClient::userClientClose(void) {
         return kIOReturnNotOpen;
     }
 
-    if (fProvider->client == this) {
-        fProvider->client = nullptr;
-        DebugLog("%s notification unregistered", __FUNCTION__);
-    }
-    fProvider->clientClosed();
+    // In the provider's gate, so an event being handled never sees a client going away
+    fProvider->commandGate->runAction([](OSObject *owner, void *arg0, void *, void *, void *) -> IOReturn {
+        YogaVPC *provider = OSDynamicCast(YogaVPC, owner);
+        if (!provider)
+            return kIOReturnError;
+        if (provider->client == arg0)
+            provider->client = nullptr;
+        provider->clientClosed();
+        return kIOReturnSuccess;
+    }, this);
+    DebugLog("%s notification unregistered", __FUNCTION__);
 
     fProvider->close(this);
     DebugLog("%s", __FUNCTION__);
@@ -191,15 +197,7 @@ IOReturn YogaSMCUserClient::registerNotificationPort(mach_port_t port, UInt32 ty
     if (!fProvider || !fProvider->isOpen(this))
         return kIOReturnNotReady;
 
-    if (fProvider->client) {
-        AlwaysLog("%s already registered", __FUNCTION__);
-        return kIOReturnPortExists;
-    }
-
-    fProvider->client = this;
-    AlwaysLog("%s subscribed", __FUNCTION__);
-    setProperty("Notification", true);
-
+    // Fill the message before publishing this client to the event handler
     m_notificationPort = port;
     notification.header.msgh_bits = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
     notification.header.msgh_size = sizeof(SMCNotificationMessage);
@@ -208,7 +206,24 @@ IOReturn YogaSMCUserClient::registerNotificationPort(mach_port_t port, UInt32 ty
     notification.header.msgh_reserved = 0;
     notification.header.msgh_id = 0;
     notification.ref = refCon;
-    return kIOReturnSuccess;
+
+    IOReturn ret = fProvider->commandGate->runAction([](OSObject *owner, void *arg0, void *, void *, void *) -> IOReturn {
+        YogaVPC *provider = OSDynamicCast(YogaVPC, owner);
+        if (!provider)
+            return kIOReturnError;
+        if (provider->client)
+            return kIOReturnPortExists;
+        provider->client = static_cast<YogaSMCUserClient *>(arg0);
+        return kIOReturnSuccess;
+    }, this);
+    if (ret == kIOReturnPortExists) {
+        AlwaysLog("%s already registered", __FUNCTION__);
+        m_notificationPort = MACH_PORT_NULL;
+        return ret;
+    }
+    AlwaysLog("%s subscribed", __FUNCTION__);
+    setProperty("Notification", true);
+    return ret;
 }
 
 IOReturn YogaSMCUserClient::sendNotification(UInt32 event, UInt32 data) {
@@ -226,6 +241,16 @@ IOReturn YogaSMCUserClient::sendNotification(UInt32 event, UInt32 data) {
             DebugLog("%s timed out", __FUNCTION__);
     }
     return ret;
+}
+
+bool YogaSMCUserClient::initWithTask(task_t owningTask, void *securityID, UInt32 type, OSDictionary *properties) {
+    // The client can write EC, so only root or the user logged in at the console
+    if (!YogaBaseService::taskPrivileged(owningTask)) {
+        IOLog("YSMC - Info: YogaSMCUserClient denied for unprivileged task\n");
+        return false;
+    }
+    fTask = owningTask;
+    return super::initWithTask(owningTask, securityID, type, properties);
 }
 
 bool YogaSMCUserClient::start(IOService *provider) {

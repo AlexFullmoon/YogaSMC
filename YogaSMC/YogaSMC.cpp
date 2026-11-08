@@ -210,6 +210,8 @@ void YogaSMC::setPropertiesGated(OSObject* props) {
 }
 
 IOReturn YogaSMC::setProperties(OSObject *props) {
+    if (!taskPrivileged(current_task()))
+        return kIOReturnNotPrivileged;
     commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &YogaSMC::setPropertiesGated), props);
     return kIOReturnSuccess;
 }

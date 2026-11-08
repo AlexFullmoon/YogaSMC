@@ -111,7 +111,7 @@ bool IdeaVPC::exitVPC() {
     return super::exitVPC();
 }
 
-IOReturn IdeaVPC::message(UInt32 type, IOService *provider, void *argument) {
+IOReturn IdeaVPC::handleMessage(UInt32 type, IOService *provider, void *argument) {
     switch (type)
     {
         case kSMC_YogaEvent:
@@ -160,7 +160,7 @@ IOReturn IdeaVPC::message(UInt32 type, IOService *provider, void *argument) {
             }
 
         default:
-            return super::message(type, provider, argument);
+            return super::handleMessage(type, provider, argument);
     }
 
     return kIOReturnSuccess;

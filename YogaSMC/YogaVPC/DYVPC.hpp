@@ -208,6 +208,6 @@ private:
     bool WMIQuery(UInt32 query, void *buffer, enum hp_wmi_command command = HPWMI_READ, UInt32 insize = sizeof(UInt32), UInt32 outsize = sizeof(UInt32));
 
 public:
-    IOReturn message(UInt32 type, IOService *provider, void *argument) APPLE_KEXT_OVERRIDE;
+    IOReturn handleMessage(UInt32 type, IOService *provider, void *argument) APPLE_KEXT_OVERRIDE;
 };
 #endif /* DYVPC_hpp */

@@ -665,7 +665,7 @@ bool ThinkVPC::setMicMuteLEDStatus(UInt32 status) {
     return true;
 }
 
-IOReturn ThinkVPC::message(UInt32 type, IOService *provider, void *argument) {
+IOReturn ThinkVPC::handleMessage(UInt32 type, IOService *provider, void *argument) {
     switch (type)
     {
         // TODO: determine default value for charge level
@@ -680,7 +680,7 @@ IOReturn ThinkVPC::message(UInt32 type, IOService *provider, void *argument) {
             }
 
         default:
-            return super::message(type, provider, argument);
+            return super::handleMessage(type, provider, argument);
     }
 
     return kIOReturnSuccess;

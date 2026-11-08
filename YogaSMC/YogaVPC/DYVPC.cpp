@@ -142,9 +142,9 @@ void DYVPC::updateVPC(UInt32 event) {
         DebugLog("Unknown id: 0x%x - 0x%x", id, data);
 }
 
-IOReturn DYVPC::message(UInt32 type, IOService *provider, void *argument) {
+IOReturn DYVPC::handleMessage(UInt32 type, IOService *provider, void *argument) {
     if (type != kIOACPIMessageDeviceNotification || !argument)
-        return super::message(type, provider, argument);
+        return super::handleMessage(type, provider, argument);
 
     updateVPC(*(reinterpret_cast<UInt32 *>(argument)));
 

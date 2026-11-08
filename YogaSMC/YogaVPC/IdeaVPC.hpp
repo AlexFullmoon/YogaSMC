@@ -436,7 +436,7 @@ private:
     bool isPowerChanged();
 
 public:
-    IOReturn message(UInt32 type, IOService *provider, void *argument) APPLE_KEXT_OVERRIDE;
+    IOReturn handleMessage(UInt32 type, IOService *provider, void *argument) APPLE_KEXT_OVERRIDE;
 };
 
 #endif /* IdeaVPC_hpp */

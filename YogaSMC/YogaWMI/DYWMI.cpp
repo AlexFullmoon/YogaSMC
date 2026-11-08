@@ -36,6 +36,8 @@ YogaWMI* YogaWMI::withDYWMI(WMI *provider) {
 }
 
 IOReturn DYWMI::setProperties(OSObject *props) {
+    if (!taskPrivileged(current_task()))
+        return kIOReturnNotPrivileged;
     commandGate->runAction(OSMemberFunctionCast(IOCommandGate::Action, this, &DYWMI::setPropertiesGated), props);
     return kIOReturnSuccess;
 }

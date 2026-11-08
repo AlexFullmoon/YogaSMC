@@ -318,6 +318,13 @@ public:
 
     virtual IOReturn setProperties(OSObject* props) APPLE_KEXT_OVERRIDE;
     virtual IOReturn message(UInt32 type, IOService *provider, void *argument) APPLE_KEXT_OVERRIDE;
+
+    /**
+     *  Message handler for subclasses, called by message(); ACPI notifications run in the command gate
+     */
+    virtual IOReturn handleMessage(UInt32 type, IOService *provider, void *argument);
+    void messageGated(UInt32 *type, IOService *provider, void *argument, IOReturn *ret);
+
     virtual IOReturn setPowerState(unsigned long powerState, IOService * whatDevice) APPLE_KEXT_OVERRIDE;
 
     /**
