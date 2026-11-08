@@ -42,6 +42,49 @@ DYTC is Lenovo's thermal mode interface, the same one Windows uses for "Intellig
 
 It needs two ACPI methods next to the VPC device, `GCSM` (get) and `SCSM` (set), plus a patched lid open EC query. They are not in any stock firmware, so the checkbox stays disabled, with a note, until an SSDT like `YogaSMC/SSDTSample/SSDT-RCSM.dsl` is added. That sample is written for IdeaPad (`VPC0`, `_Q0D`); on ThinkPad the methods go into `HKEY` and the lid query has to be found in the DSDT.
 
+On ThinkPad X1 Yoga Gen 5 the lid open query is `_Q2A` (`_Q2B` is lid close). Rename it with an OpenCore ACPI patch (`_Q2A` → `XQ2A` in DSDT, Count 1) and add to an SSDT:
+
+```
+External (_SB_.PCI0.LPCB.EC__.XQ2A, MethodObj)
+
+Scope (_SB.PCI0.LPCB.EC)
+{
+    Name (RCSM, Zero)
+
+    Method (_Q2A, 0, NotSerialized)
+    {
+        If (!_OSI ("Darwin") || (RCSM == Zero))
+        {
+            XQ2A ()
+        }
+    }
+}
+
+Scope (_SB.PCI0.LPCB.EC.HKEY)
+{
+    Method (GCSM, 0, NotSerialized)
+    {
+        Return (\_SB.PCI0.LPCB.EC.RCSM)
+    }
+
+    Method (SCSM, 1, NotSerialized)
+    {
+        If ((Arg0 == Zero))
+        {
+            \_SB.PCI0.LPCB.EC.RCSM = Zero
+        }
+        Else
+        {
+            \_SB.PCI0.LPCB.EC.RCSM = One
+        }
+
+        Return (Zero)
+    }
+}
+```
+
+Clamshell mode starts off after every boot. Waking from sleep by opening the lid is not handled specially; on this machine the external display may wake slowly and macOS may switch to the internal one.
+
 **Turn off keyboard backlight in tablet mode** (IdeaPad only, hidden elsewhere): driver bit `AutoBacklight` 1. On ThinkPad the keyboard is disabled in tablet-like modes anyway.
 
 ### Driver
