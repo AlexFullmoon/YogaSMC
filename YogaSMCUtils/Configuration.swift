@@ -84,6 +84,13 @@ private let commandFlag = UInt32(NSEvent.ModifierFlags.command.rawValue)
 private let controlFlag = UInt32(NSEvent.ModifierFlags.control.rawValue)
 private let optionFlag = UInt32(NSEvent.ModifierFlags.option.rawValue)
 
+// Screen position changes are frequent and need no action, show them only for debugging
+#if DEBUG
+let showYogaMode = true
+#else
+let showYogaMode = false
+#endif
+
 let ideaEvents: [UInt32: [UInt32: EventDesc]] = [
     0x00: [
         0x00: EventDesc("Special Button", display: false),
@@ -116,11 +123,11 @@ let ideaEvents: [UInt32: [UInt32: EventDesc]] = [
         commandFlag: EventDesc("Wireless", act: .wireless)
     ],
     0x10: [
-        0: EventDesc("Yoga Mode", act: .yoga),
-        1: EventDesc("Laptop Mode"),
-        2: EventDesc("Tablet Mode"),
-        3: EventDesc("Stand Mode"),
-        4: EventDesc("Tent Mode")
+        0: EventDesc("Yoga Mode", act: .yoga, display: showYogaMode),
+        1: EventDesc("Laptop Mode", display: showYogaMode),
+        2: EventDesc("Tablet Mode", display: showYogaMode),
+        3: EventDesc("Stand Mode", display: showYogaMode),
+        4: EventDesc("Tent Mode", display: showYogaMode)
     ],
     0x11: [0: EventDesc("FnLock", act: .fnlock)]
 ]
@@ -172,12 +179,12 @@ let thinkEvents: [UInt32: [UInt32: EventDesc]] = [
     TP_HKEY_EV_PALM_DETECTED.rawValue: [0: EventDesc("Palm Detected", display: false)], // 0x60B0
     TP_HKEY_EV_PALM_UNDETECTED.rawValue: [0: EventDesc("Palm Undetected", display: false)], // 0x60B1
     TP_HKEY_EV_TABLET_CHANGED.rawValue: [
-        0: EventDesc("Yoga Mode", act: .yoga),
-        1: EventDesc("Laptop Mode"),
-        2: EventDesc("Flat Mode"),
-        3: EventDesc("Tablet Mode"),
-        4: EventDesc("Stand Mode"),
-        5: EventDesc("Tent Mode")
+        0: EventDesc("Yoga Mode", act: .yoga, display: showYogaMode),
+        1: EventDesc("Laptop Mode", display: showYogaMode),
+        2: EventDesc("Flat Mode", display: showYogaMode),
+        3: EventDesc("Tablet Mode", display: showYogaMode),
+        4: EventDesc("Stand Mode", display: showYogaMode),
+        5: EventDesc("Tent Mode", display: showYogaMode)
     ], // 0x60C0
     TP_HKEY_EV_THM_TRANSFM_CHANGED.rawValue: [0: EventDesc("Thermal Changed", display: false)] // 0x60F0
 ]
